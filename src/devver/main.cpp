@@ -41,6 +41,7 @@ struct Tool {
   std::string command;
   std::vector<std::string> args;
   bool show_version;
+  bool show_details;
 };
 
 // ============================================================

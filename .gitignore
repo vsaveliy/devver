@@ -1,0 +1,39 @@
+# CMake
+build/
+cmake-build-*/
+
+# Compiled binaries
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.exe
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+
+# Packaging
+pkg/
+src/build/
+*.pkg.tar.zst
+
+# IDE
+.idea/
+.vscode/
+.vscode/*
+*.user
+*.user.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.swp
+*.swo
+*~

@@ -1,5 +1,5 @@
 pkgname=devver
-pkgver=1.0.0
+pkgver=1.0.2
 pkgrel=1
 
 pkgdesc="Development environment version checker"

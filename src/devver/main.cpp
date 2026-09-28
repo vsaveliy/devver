@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <sys/wait.h>
@@ -130,6 +131,20 @@ std::string first_line(const std::string &text) {
   return {};
 }
 
+std::string extract_version(const std::string &output) {
+  static const std::regex version_regex(
+      R"((?:version\s+)?([0-9]+\.[0-9]+(?:\.[0-9]+)?(?:[-+][0-9A-Za-z.-]+)?))",
+      std::regex::icase);
+
+  std::smatch match;
+
+  if (std::regex_search(output, match, version_regex)) {
+    return match[1].str();
+  }
+
+  return first_line(output);
+}
+
 // ============================================================
 // Tool constructors
 // ============================================================
@@ -176,15 +191,12 @@ void check_tool(const Tool &tool) {
 
   const CommandResult result = execute_command(tool.command, tool.args);
 
-  if (!result.success) {
-    std::cout << color::red << first_line(result.output) << color::reset
+  if (result.success) {
+    std::cout << color::green << extract_version(result.output) << color::reset
               << '\n';
-
-    return;
+  } else {
+    std::cout << color::red << "error" << color::reset << '\n';
   }
-
-  std::cout << color::green << first_line(result.output) << color::reset
-            << '\n';
 }
 
 // ============================================================

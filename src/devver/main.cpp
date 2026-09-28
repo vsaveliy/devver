@@ -776,35 +776,21 @@ private:
   // ========================================================
 
   static void remove_duplicates(std::vector<JetBrainsIDE> &result) {
-
-    std::vector<JetBrainsIDE> unique;
+    std::vector<JetBrainsIDE> unique_ides;
+    unique_ides.reserve(result.size());
 
     for (const JetBrainsIDE &ide : result) {
-
-      bool exists = false;
-
-      for (const JetBrainsIDE &existing : unique) {
-
-        /*
-         * Same IDE can be discovered through:
-         *
-         * 1. Toolbox
-         * 2. PATH
-         *
-         * Don't print it twice.
-         */
-        if (existing.name() == ide.name()) {
-          exists = true;
-          break;
-        }
-      }
+      const bool exists = std::any_of(unique_ides.begin(), unique_ides.end(),
+                                      [&ide](const JetBrainsIDE &existing) {
+                                        return existing.name() == ide.name();
+                                      });
 
       if (!exists) {
-        unique.push_back(ide);
+        unique_ides.push_back(ide);
       }
     }
 
-    result = std::move(unique);
+    result = std::move(unique_ides);
   }
 };
 

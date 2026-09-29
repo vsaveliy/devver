@@ -1,10 +1,11 @@
+#include <algorithm>
 #include <array>
+#include <cctype>
 #include <cerrno>
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <initializer_list>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -162,6 +163,7 @@ public:
     ::close(pipe_fds[1]);
 
     std::string output;
+
     std::array<char, 4096> buffer{};
 
     const auto start = std::chrono::steady_clock::now();
@@ -185,6 +187,7 @@ public:
       FD_SET(pipe_fds[0], &read_fds);
 
       timeval timeout{};
+
       timeout.tv_sec = 0;
       timeout.tv_usec = 100'000;
 
@@ -264,7 +267,6 @@ public:
     std::smatch match;
 
     if (std::regex_search(text, match, version_pattern)) {
-
       return match.str(1);
     }
 
@@ -308,6 +310,7 @@ public:
 
   [[nodiscard]]
   std::string version() const {
+
     if (!show_version_) {
       return {};
     }
@@ -378,6 +381,7 @@ struct Statistics {
 class Console {
 public:
   static void banner() {
+
     std::cout << '\n'
               << color::bold << color::cyan
               << "╭──────────────────────────────────────────────╮\n"
@@ -395,6 +399,7 @@ public:
   }
 
   static void section_end() {
+
     std::cout << color::blue
               << "└──────────────────────────────────────────────"
               << color::reset << '\n';
@@ -435,7 +440,17 @@ public:
               << color::reset << '\n';
   }
 
+  static void jetbrains_missing(std::string_view name) {
+
+    constexpr int name_width = 25;
+
+    std::cout << "│ " << color::red << "✗" << color::reset << ' ' << std::left
+              << std::setw(name_width) << name << color::dim << "not installed"
+              << color::reset << '\n';
+  }
+
   static void no_jetbrains() {
+
     std::cout << "│ " << color::yellow << "No JetBrains IDEs found"
               << color::reset << '\n';
   }
@@ -470,15 +485,19 @@ public:
     Statistics statistics;
 
     for (const Tool &tool : tools) {
+
       const bool installed = tool.installed();
 
       if (installed) {
+
         ++statistics.installed;
 
         const std::string version = tool.version();
 
         Console::tool(tool, true, version);
+
       } else {
+
         ++statistics.missing;
 
         Console::tool(tool, false, {});
@@ -532,6 +551,16 @@ private:
     fs::path path;
   };
 
+  /*
+   * JetBrains products checked by devver.
+   *
+   * identifier:
+   *     used to detect the product in paths
+   *
+   * name:
+   *     displayed to the user
+   */
+
   static constexpr std::array<std::pair<std::string_view, std::string_view>, 12>
       ide_names{{{"clion", "CLion"},
                  {"idea", "IntelliJ IDEA"},
@@ -544,11 +573,12 @@ private:
                  {"rubymine", "RubyMine"},
                  {"rider", "Rider"},
                  {"aqua", "Aqua"},
-                 {"appcode", "AppCode"}}};
+                 {"dataspell", "DataSpell"}}};
 
 public:
   [[nodiscard]]
   std::vector<JetBrainsIDE> scan() const {
+
     std::vector<JetBrainsIDE> result;
 
     scan_toolbox(result);
@@ -557,6 +587,16 @@ public:
     remove_duplicates(result);
 
     return result;
+  }
+
+  [[nodiscard]]
+  static constexpr std::size_t total_products() noexcept {
+    return ide_names.size();
+  }
+
+  [[nodiscard]]
+  static constexpr auto products() noexcept {
+    return ide_names;
   }
 
 private:
@@ -606,11 +646,12 @@ private:
     }
 
     /*
-     * Important:
+     * We don't recursively scan the whole
+     * home directory.
      *
-     * We don't recursively scan the whole home directory.
+     * We scan ONLY:
      *
-     * We scan ONLY JetBrains Toolbox/apps.
+     * ~/.local/share/JetBrains/Toolbox/apps
      */
 
     scan_toolbox_directory(toolbox, result, 0);
@@ -628,7 +669,11 @@ private:
 
     for (fs::directory_iterator iterator{
              directory, fs::directory_options::skip_permission_denied, error};
-         iterator != fs::directory_iterator{}; iterator.increment(error)) {
+
+         iterator != fs::directory_iterator{};
+
+         iterator.increment(error)) {
+
       if (error) {
         error.clear();
         continue;
@@ -641,7 +686,7 @@ private:
       }
 
       /*
-       * Проверяем признаки установки JetBrains IDE.
+       * JetBrains installation markers.
        */
 
       const fs::path build_txt = current / "build.txt";
@@ -658,28 +703,30 @@ private:
                           fs::exists(lib_product_info, error);
 
       if (is_ide) {
+
         const std::string name = detect_name(current);
 
         if (!name.empty()) {
+
           const std::string version = read_version(current);
 
           result.emplace_back(name, current,
                               version.empty() ? "unknown" : version);
 
           /*
-           * IDE найдена.
+           * IDE found.
            *
-           * Внутри неё дальше не идём,
-           * потому что это уже конечный
-           * каталог установки.
+           * Don't scan inside it.
            */
+
           continue;
         }
       }
 
       /*
-       * Ручная рекурсия.
+       * Manual recursion.
        */
+
       scan_toolbox_directory(current, result, depth + 1);
     }
   }
@@ -697,6 +744,7 @@ private:
          directory / "lib" / "product-info.json"}};
 
     for (const fs::path &file : files) {
+
       std::error_code error;
 
       if (!fs::exists(file, error) || !fs::is_regular_file(file, error)) {
@@ -732,6 +780,10 @@ private:
 
   static void scan_path(std::vector<JetBrainsIDE> &result) {
 
+    /*
+     * Executable names used by JetBrains products.
+     */
+
     static constexpr std::array<std::pair<std::string_view, std::string_view>,
                                 11>
         commands{{{"clion", "CLion"},
@@ -758,6 +810,7 @@ private:
       std::string version{"unknown"};
 
       if (!result_command.output.empty()) {
+
         const std::string parsed =
             VersionParser::extract(result_command.output);
 
@@ -776,10 +829,13 @@ private:
   // ========================================================
 
   static void remove_duplicates(std::vector<JetBrainsIDE> &result) {
+
     std::vector<JetBrainsIDE> unique_ides;
+
     unique_ides.reserve(result.size());
 
     for (const JetBrainsIDE &ide : result) {
+
       const bool exists = std::any_of(unique_ides.begin(), unique_ides.end(),
                                       [&ide](const JetBrainsIDE &existing) {
                                         return existing.name() == ide.name();
@@ -800,26 +856,56 @@ private:
 
 class JetBrainsSection {
 public:
-  static void print() {
+  [[nodiscard]]
+  static Statistics print() {
 
     Console::section("JETBRAINS IDE");
 
     const JetBrainsScanner scanner;
 
-    const std::vector<JetBrainsIDE> ides = scanner.scan();
+    /*
+     * Only actually installed IDEs are returned
+     * by scan().
+     */
+    const std::vector<JetBrainsIDE> installed_ides = scanner.scan();
 
-    if (ides.empty()) {
-      Console::no_jetbrains();
-      Console::section_end();
+    Statistics statistics;
 
-      return;
-    }
+    /*
+     * Iterate over the COMPLETE list of JetBrains
+     * products.
+     *
+     * This allows us to print both:
+     *
+     * ✓ installed
+     * ✗ not installed
+     */
 
-    for (const JetBrainsIDE &ide : ides) {
-      Console::jetbrains_tool(ide.name(), ide.version());
+    for (const auto &[identifier, name] : JetBrainsScanner::products()) {
+
+      (void)identifier;
+
+      const auto iterator = std::find_if(
+          installed_ides.begin(), installed_ides.end(),
+          [name](const JetBrainsIDE &ide) { return ide.name() == name; });
+
+      if (iterator != installed_ides.end()) {
+
+        ++statistics.installed;
+
+        Console::jetbrains_tool(iterator->name(), iterator->version());
+
+      } else {
+
+        ++statistics.missing;
+
+        Console::jetbrains_missing(name);
+      }
     }
 
     Console::section_end();
+
+    return statistics;
   }
 };
 
@@ -849,8 +935,16 @@ public:
     total += print_debugging();
     total += print_editors();
     total += print_documentation();
+    total += print_virtualization();
 
-    JetBrainsSection::print();
+    /*
+     * IMPORTANT:
+     *
+     * JetBrains now participates in the
+     * global statistics.
+     */
+
+    total += JetBrainsSection::print();
 
     Console::summary(total);
 
@@ -858,6 +952,10 @@ public:
   }
 
 private:
+  // ========================================================
+  // Generic section
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print(std::string_view title,
                           const std::vector<Tool> &tools) {
@@ -870,6 +968,10 @@ private:
 
     return statistics;
   }
+
+  // ========================================================
+  // C / C++
+  // ========================================================
 
   [[nodiscard]]
   static Statistics print_cpp() {
@@ -898,6 +1000,10 @@ private:
                   Tools::version("pkg-config", "pkg-config", {"--version"})});
   }
 
+  // ========================================================
+  // Build systems
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print_build_systems() {
 
@@ -915,6 +1021,10 @@ private:
                   Tools::version("Flex", "flex", {"--version"})});
   }
 
+  // ========================================================
+  // C++ package managers
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print_cpp_package_managers() {
 
@@ -923,6 +1033,10 @@ private:
 
                   Tools::version("Vcpkg", "vcpkg", {"--version"})});
   }
+
+  // ========================================================
+  // Rust
+  // ========================================================
 
   [[nodiscard]]
   static Statistics print_rust() {
@@ -939,6 +1053,10 @@ private:
 
          Tools::version("Rust Analyzer", "rust-analyzer", {"--version"})});
   }
+
+  // ========================================================
+  // Python
+  // ========================================================
 
   [[nodiscard]]
   static Statistics print_python() {
@@ -957,6 +1075,10 @@ private:
 
                             Tools::version("Pipenv", "pipenv", {"--version"})});
   }
+
+  // ========================================================
+  // JavaScript / TypeScript
+  // ========================================================
 
   [[nodiscard]]
   static Statistics print_javascript() {
@@ -979,6 +1101,10 @@ private:
                   Tools::version("TypeScript", "tsc", {"--version"})});
   }
 
+  // ========================================================
+  // Go
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print_go() {
 
@@ -986,6 +1112,10 @@ private:
 
                         Tools::exists("Gofmt", "gofmt")});
   }
+
+  // ========================================================
+  // Java / JVM
+  // ========================================================
 
   [[nodiscard]]
   static Statistics print_java() {
@@ -1000,6 +1130,10 @@ private:
                   Tools::version("Gradle", "gradle", {"--version"})});
   }
 
+  // ========================================================
+  // Version control
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print_version_control() {
 
@@ -1012,6 +1146,10 @@ private:
 
                   Tools::version("Mercurial", "hg", {"--version"})});
   }
+
+  // ========================================================
+  // Containers
+  // ========================================================
 
   [[nodiscard]]
   static Statistics print_containers() {
@@ -1028,6 +1166,10 @@ private:
 
          Tools::version("Skopeo", "skopeo", {"--version"})});
   }
+
+  // ========================================================
+  // Databases
+  // ========================================================
 
   [[nodiscard]]
   static Statistics print_databases() {
@@ -1046,6 +1188,10 @@ private:
                   Tools::version("MongoDB", "mongosh", {"--version"})});
   }
 
+  // ========================================================
+  // Debugging / Profiling
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print_debugging() {
 
@@ -1063,6 +1209,10 @@ private:
                   Tools::version("Ltrace", "ltrace", {"--version"})});
   }
 
+  // ========================================================
+  // Editors / IDE
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print_editors() {
 
@@ -1078,6 +1228,10 @@ private:
                   Tools::version("Emacs", "emacs", {"--version"})});
   }
 
+  // ========================================================
+  // Documentation
+  // ========================================================
+
   [[nodiscard]]
   static Statistics print_documentation() {
 
@@ -1088,6 +1242,19 @@ private:
 
                   Tools::version("Sphinx", "sphinx-build", {"--version"})});
   }
+
+  // ========================================================
+  // Virtualization
+  // ========================================================
+
+  [[nodiscard]]
+  static Statistics print_virtualization() {
+
+    return print("VIRTUALIZATION / TOOLS",
+                 {Tools::version("VirtualBox", "virtualbox", {"--help"}),
+
+                  Tools::version("QEMU", "qemu-system-x86_64", {"--version"})});
+  }
 };
 
 // ============================================================
@@ -1095,6 +1262,7 @@ private:
 // ============================================================
 
 int main() {
+
   const Application application;
 
   return application.run();

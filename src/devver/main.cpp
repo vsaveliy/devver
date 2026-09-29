@@ -1063,11 +1063,7 @@ private:
 
     return print("PYTHON", {Tools::version("Python", "python", {"--version"}),
 
-                            Tools::version("Python3", "python3", {"--version"}),
-
                             Tools::version("Pip", "pip", {"--version"}),
-
-                            Tools::version("Pip3", "pip3", {"--version"}),
 
                             Tools::version("UV", "uv", {"--version"}),
 

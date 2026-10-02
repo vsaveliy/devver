@@ -1,6 +1,6 @@
 pkgname=devver
 pkgver=1.0.2
-pkgrel=2
+pkgrel=3
 
 pkgdesc="Development environment version checker"
 arch=('x86_64')

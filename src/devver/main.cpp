@@ -1008,17 +1008,21 @@ private:
   static Statistics print_build_systems() {
 
     return print("BUILD SYSTEMS",
-                 {Tools::version("Meson", "meson", {"--version"}),
+                 {
+                     Tools::version("Meson", "meson", {"--version"}),
 
-                  Tools::version("Autoconf", "autoconf", {"--version"}),
+                     Tools::version("Autoconf", "autoconf", {"--version"}),
 
-                  Tools::version("Automake", "automake", {"--version"}),
+                     Tools::version("Automake", "automake", {"--version"}),
 
-                  Tools::version("Libtoolize", "libtoolize", {"--version"}),
+                     Tools::version("Libtoolize", "libtoolize", {"--version"}),
 
-                  Tools::version("Bison", "bison", {"--version"}),
+                     Tools::version("Bison", "bison", {"--version"}),
 
-                  Tools::version("Flex", "flex", {"--version"})});
+                     Tools::version("Flex", "flex", {"--version"}),
+
+                     Tools::version("Bazel", "bazel", {"--version"}),
+                 });
   }
 
   // ========================================================

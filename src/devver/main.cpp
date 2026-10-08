@@ -1047,15 +1047,17 @@ private:
 
     return print(
         "RUST",
-        {Tools::version("Rustc", "rustc", {"--version"}),
+        {
+            Tools::version("Rustc", "rustc", {"--version"}),
 
-         Tools::version("Cargo", "cargo", {"--version"}),
+            Tools::version("Cargo", "cargo", {"--version"}),
 
-         Tools::version("Rustfmt", "rustfmt", {"--version"}),
+            Tools::version("Rustfmt", "rustfmt", {"--version"}),
 
-         Tools::version("Cargo Clippy", "cargo", {"clippy", "--version"}),
+            Tools::version("Cargo Clippy", "cargo", {"clippy", "--version"}),
 
-         Tools::version("Rust Analyzer", "rust-analyzer", {"--version"})});
+            Tools::version("Rust Analyzer", "rust-analyzer", {"--version"}),
+        });
   }
 
   // ========================================================
@@ -1065,15 +1067,20 @@ private:
   [[nodiscard]]
   static Statistics print_python() {
 
-    return print("PYTHON", {Tools::version("Python", "python", {"--version"}),
+    return print("PYTHON",
+                 {
+                     Tools::version("Python", "python", {"--version"}),
 
-                            Tools::version("Pip", "pip", {"--version"}),
+                     Tools::version("Pip", "pip", {"--version"}),
 
-                            Tools::version("UV", "uv", {"--version"}),
+                     Tools::version("UV", "uv", {"--version"}),
 
-                            Tools::version("Poetry", "poetry", {"--version"}),
+                     Tools::version("Poetry", "poetry", {"--version"}),
 
-                            Tools::version("Pipenv", "pipenv", {"--version"})});
+                     Tools::version("Pipenv", "pipenv", {"--version"}),
+
+                     Tools::version("Pipx", "pipx", {"--version"}),
+                 });
   }
 
   // ========================================================
